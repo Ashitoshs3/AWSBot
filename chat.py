@@ -17,7 +17,7 @@ tokenizer = TapasTokenizer.from_pretrained(model_name)
 model = TapasForQuestionAnswering.from_pretrained(model_name, local_files_only=False)
 def apply_model(table, queries):
 
-    ######################
+    ########################
     # inputs = tokenizer(table=table, queries=queries, padding="max_length", return_tensors="pt")
     # outputs = model(**inputs)
     # predicted_answer_coordinates, predicted_aggregation_indices = tokenizer.convert_logits_to_predictions(inputs, outputs.logits.detach(), outputs.logits_aggregation.detach())
