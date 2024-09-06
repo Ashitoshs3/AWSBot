@@ -35,7 +35,7 @@ threading.Thread(target=app.run,kwargs={"use_reloader": False}).start()
 # return app
 
 tqa = pipeline(task="table-question-answering",model="google/tapas-large-finetuned-wtq")
-dataset = pd.read_csv("./data_sheet.csv")
+dataset = pd.read_excel("./aws_inventory_detailed.xlsx")
 dataset = dataset.reset_index(drop=True)
 # dataset['Number of Objects'] = dataset['Number of Objects'].astype(str)
 # dataset['Bill Per Month'] = dataset['Bill Per Month'].astype(str)
