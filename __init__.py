@@ -1,42 +1,37 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, render_template, request, jsonify
+from flask_ngrok import run_with_ngrok  # Add this import
+import openai
 import os
-from flask_cors import CORS
-from pyngrok import ngrok
-import threading
 import pandas as pd
-from transformers import pipeline
 
-# Set environment
-os.environ['FLASK_ENV'] = "development"
+# Set up OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-app = Flask(__name__, instance_relative_config=True)
-CORS(app)
-port = 5000
-ngrok.set_auth_token("2clJ8ZLAFYkVM4o0OdRokc7FJfV_UnbPAbRQ8Z19R9Rn1sBn")
-public_url = ngrok.connect(port).public_url
-app.config['BASE_URL'] = public_url
+# Initialize Flask app
+app = Flask(__name__)
+run_with_ngrok(app)  # Enable ngrok for public URL
 
-print(f"url is {public_url} and port is {port}")
+# Load the xlsx data file
+file_path = "path/to/your/file.xlsx"
+df = pd.read_excel(file_path)
 
-# Start Flask app in a separate thread
-threading.Thread(target=app.run, kwargs={"use_reloader": False}).start()
+# Define a route for the home page
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-# Load model for table-question-answering
-tqa = pipeline(task="table-question-answering", model="google/tapas-large-finetuned-wtq")
+# Define a route for processing chatbot queries
+@app.route('/chat/ask', methods=['POST'])
+def chat():
+    user_input = request.json['chat_box_input']
+    # Add your OpenAI query logic here using the user_input
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": user_input}]
+    )
+    answer = response.choices[0].message['content']
+    return jsonify({"answer": answer})
 
-# Load dataset from Excel file
-dataset = pd.read_excel("/mnt/data/aws_inventory_detailed.xlsx")
-dataset = dataset.reset_index(drop=True)
-dataset = dataset.astype(str)
-
-@app.route("/chat", methods=["GET", "POST"])
-def display_sentence():
-    return render_template("./index.html")
-
-@app.route("/chat/ask", methods=["POST"])
-def ask():
-    request_parameter = request.get_json(force=True)
-    chat_question = request_parameter["chat_box_input"]
-
-    # Generate answer using the model
-    return tqa(table=dataset, query=chat_question)
+# Run the app
+if __name__ == "__main__":
+    app.run()
